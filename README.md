@@ -10,6 +10,8 @@ A simple powershell menu object to be embedded within scripts
     New-Menu (Get-Command)
 ```
 
+![alt text](https://github.com/amjack100/Menu/Docs/FunctionExample.gif "-")
+
 ## Class Example:
 
 ```Powershell
