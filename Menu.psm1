@@ -142,8 +142,8 @@ class Menu {
         $this.i = 0
     
         $this.KeyActions = @{
-            'Up'   = { $this.i -= 1 }  
-            'Down' = { $this.i += 1 } 
+            'Up'   = { return { $this.i -= 1 } }  
+            'Down' = { return { $this.i += 1 } } 
         }
     
         if ($this.WorkingItems.Count -ne $this.DisplayItems.Count) {
@@ -234,7 +234,7 @@ class Menu {
         if ($Key -in $this.KeyActions.Keys) {
             
             # Every scriptblock in KeyActions is given $i and the selection when it is invoked
-            return (& $this.KeyActions[$Key] $this.i $this.GetSelection())
+            return (. $this.KeyActions[$Key] $this.i $this.GetSelection())
         }
         else {
             return $null
@@ -254,7 +254,12 @@ class Menu {
             $ActionResult = $this.ResolveAction([KeyReader]::ReadKey())
 
             if ($null -ne $ActionResult) {
-                return $ActionResult
+                if ($ActionResult -is [scriptblock]) {
+                    . $ActionResult
+                }
+                else {
+                    return $ActionResult
+                }
             }
             else {
                 $wshell = New-Object -ComObject wscript.shell

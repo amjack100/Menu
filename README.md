@@ -4,7 +4,13 @@ Work in progress!
 
 A simple powershell menu object to be embedded within scripts
 
-## Basic Example:
+## Function Example:
+
+```Powershell
+    New-Menu (Get-Command)
+```
+
+## Class Example:
 
 ```Powershell
     $Items = 1..50
