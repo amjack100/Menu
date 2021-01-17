@@ -241,7 +241,7 @@ class Menu {
         }
     }
 
-    [void] Start() {
+    [object] Start() {
     
         # Main loop which refreshes immediately upon receiving keyboard input
         # If the key input is not associated with a predefined action, sends the key to the host
@@ -254,25 +254,29 @@ class Menu {
             $ActionResult = $this.ResolveAction([KeyReader]::ReadKey())
 
             if ($null -ne $ActionResult) {
-                
+                return $ActionResult
             }
             else {
                 $wshell = New-Object -ComObject wscript.shell
                 $wshell.SendKeys("$($this.KeyInput)")
                 [console]::CursorVisible = $true
                 break
+                return $null
             }
         }
+        return $null
     }
 }
 
 
 function New-Menu {
     param(
+        [Parameter(Mandatory)]
         $Items
     )
 
     $m = [menu]::new($Items, { $_ })
+    $m.KeyActions.Enter = { param($i, $item) return $item; break }
     $m.Start()
 
 }
