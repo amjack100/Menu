@@ -15,6 +15,8 @@ A simple powershell menu object to be embedded within scripts
 ## Class Example:
 
 ```Powershell
+    using module Menu
+
     $Items = 1..50
     $DisplayFilter = { $_ }
 
@@ -26,6 +28,8 @@ A simple powershell menu object to be embedded within scripts
 ## Directory Navigation Menu Example:
 
 ```Powershell
+    using module Menu
+
     $Menu = [Menu]::new($ChildItems, $Filter)
 
     $Menu.KeyActions.Delete = { param($i, $item) remove-item $item -Force -Recurse }
