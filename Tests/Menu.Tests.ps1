@@ -44,9 +44,9 @@ Describe "Menu" {
             $flag = $false
             while ($i_ -lt 100) {
                 
-                foreach ($Item in $Menu.RefreshDisplay()) {
+                foreach ($Item in $Menu.Refresh()) {
                     Write-Host $item
-                    $Item | Should -Be $Menu.SelectedItems[$i]
+                    $Item | Should -Be $Menu.SelectedItems[$Menu.i]
                 }
                 
                 Write-Host ("$($Menu.UpperBounds)" + '..' + $($Menu.LowerBounds) )
@@ -68,17 +68,17 @@ Describe "Menu" {
         }
     }
 
-    Context "Boundary Conditions" {
+    # Context "Boundary Conditions" {
 
-        It "Properly sets the boundary conditions if item count is over max display count" {
-            $Menu.i = 20
-            $Menu.AdjustBoundary()
-            $Menu.UpperBounds | Should -Be ($Menu.i - [Math]::Ceiling(($Menu.Max / 2)))
-            $Menu.LowerBounds | Should -Be ($Menu.i + [Math]::Ceiling(($Menu.Max / 2)))
+    #     It "Properly sets the boundary conditions if item count is over max display count" {
+    #         $Menu.i = 20
+    #         $Menu.AdjustBoundary()
+    #         $Menu.UpperBounds | Should -Be ($Menu.i - [Math]::Ceiling(($Menu.Max / 2)))
+    #         $Menu.LowerBounds | Should -Be ($Menu.i + [Math]::Ceiling(($Menu.Max / 2)))
 
-        }
+    #     }
 
-    }
+    # }
 
     Context "GetSelection" {
 

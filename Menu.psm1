@@ -170,71 +170,103 @@ class Menu {
         return $tmp
     
     }
-    hidden [object] GetSelection() {
+    
+    hidden [object] GetSelection([int32]$i) {
         
-        return ($this.WorkingItems)[$this.i]
+        return ($this.WorkingItems)[$i]
     }
 
-    hidden [void] AdjustBoundary() {
-    
-        if ($this.i -lt 0) { $this.i = $this.DisplayItems.Count - 1 } 
-        if ($this.i -gt $this.DisplayItems.Count - 1) { $this.i = 0 }
+    hidden [int32] WrapIndex([int32]$i_, [int32]$ItemCount) {
 
-        if ($this.DisplayItems.count -gt $this.Max) {
-        
-        
-            $this.LowerBounds = $this.i + [Math]::Ceiling(($this.Max / 2))
-            $this.UpperBounds = $this.i - [Math]::Ceiling(($this.Max / 2))
+        if ($i_ -lt 0) {
+            $i_ = $ItemCount - 1
+        }
+        if ($i_ -gt ($ItemCount - 1)) {
+            $i_ = 0
+        }
 
+        return $i_
+    } 
+
+    hidden [Int32[]] CreateBoundary( [int32]$i_, [int32]$ItemCount, [int32]$MaxCount ) {
+
+        $Bounds = [psobject]@{
+            Upper = $null
+            Lower = $null
+        }
+
+        if ($ItemCount -gt $MaxCount) {
+        
+            $Bounds.Lower = $i_ + [Math]::Ceiling(($this.Max / 2))
+            $Bounds.Upper = $i_ - [Math]::Ceiling(($this.Max / 2))
 
             # if ($this.LowerBounds -gt $this.DisplayItems.Count) {
             #     throw
             # }
-            if ($this.UpperBounds -lt 0) {
-                $this.UpperBounds = 0
+            if ($Bounds.Upper -lt 0) {
+                $Bounds.Upper = 0
             }
-            if ($this.UpperBounds -eq 0) {
-                $this.LowerBounds = $this.Max
+            if ($Bounds.Upper -eq 0) {
+                $Bounds.Lower = $MaxCount
             }
 
-            if ($this.LowerBounds -gt $this.DisplayItems.count) {
-                $this.LowerBounds = $this.DisplayItems.Count
-                $this.UpperBounds = $this.LowerBounds - $this.Max
+            if ($Bounds.Lower -gt $ItemCount) {
+                $Bounds.Lower = $ItemCount
+                $Bounds.Upper = $Bounds.Lower - $MaxCount
             }
             
         }
         else {
-            $this.LowerBounds = $this.DisplayItems.count - 1
+            $Bounds.Lower = $ItemCount - 1
+            $Bounds.Upper = 0
         }
+
+        return $Bounds.Upper..$Bounds.Lower
+
     }
 
-    hidden [void] RefreshDisplay() {
-        [console]::CursorVisible = $false
-        $this.AdjustBoundary()
-    
-        Clear-Host; $items = @()
-        For ($i_ = $this.UpperBounds; $i_ -le $this.LowerBounds; $i_++) {
+    hidden [object[]] CreateHostSelection($Items, $ItemsAsSelected, [int32[]]$Range, [int32]$Selection) {
+
+        $ResultItems = @()
+
+        For ($i_ = $Range[0]; $i_ -le $Range[ - 1]; $i_++) {
         
             If ($i_ -eq $this.i) {
                 #Selected item
-                $Items += $this.SelectedItems[$i_]
+                $ResultItems += $this.SelectedItems[$i_]
             }
             Else {
                 #Other items
-                $Items += "  $($this.DisplayItems[$i_])  "
+                $ResultItems += "  $($this.DisplayItems[$i_])  "
             }
-        
         }
-    
-        $Items |  Write-Host
+        return $ResultItems
     }
 
-    hidden [object] ResolveAction([string]$Key) {
+    hidden [object] Refresh() {
 
-        if ($Key -in $this.KeyActions.Keys) {
+        [console]::CursorVisible = $false
+
+        $this.i = $this.WrapIndex($this.i, $this.DisplayItems.Count)
+
+        [int32[]]$ItemRange_ = $this.CreateBoundary($this.i, $this.DisplayItems.Count, $this.Max)
+
+        Clear-Host
+
+        $this.CreateHostSelection($this.DisplayItems, $this.WorkingItems, $ItemRange_, $this.i) | Write-Host
+
+        return [psobject]@{
+            i    = $this.i
+            item = $this.GetSelection($this.i)            
+        }
+    }
+
+    hidden [object] ResolveAction([string]$Key, [hashtable]$Actions, [psobject]$Selection) {
+
+        if ($Key -in $Actions.Keys) {
             
             # Every scriptblock in KeyActions is given $i and the selection when it is invoked
-            return (. $this.KeyActions[$Key] $this.i $this.GetSelection())
+            return (. $Actions[$Key] $Selection.i $Selection.item)
         }
         else {
             return $null
@@ -249,9 +281,9 @@ class Menu {
         
         While ($true) {
         
-            $this.RefreshDisplay()
+            [psobject]$Selection = $this.Refresh()
         
-            $ActionResult = $this.ResolveAction([KeyReader]::ReadKey())
+            $ActionResult = $this.ResolveAction([KeyReader]::ReadKey(), $this.KeyActions, $Selection)
 
             if ($null -ne $ActionResult) {
                 if ($ActionResult -is [scriptblock]) {
